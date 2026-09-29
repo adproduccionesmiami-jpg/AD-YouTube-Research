@@ -82,16 +82,6 @@ function isKeywordToken(word: string): boolean {
   return !STOP_WORDS.has(word) && (word.length > 2 || /^\d{2,}$/.test(word));
 }
 
-function isEntityPhrase(value: string): boolean {
-  const pattern = /(?<![\p{L}\p{N}])[A-ZÁÉÍÓÚÜÑ][\p{L}\p{N}'’.-]+(?:\s+[A-ZÁÉÍÓÚÜÑ][\p{L}\p{N}'’.-]+){0,2}/gu;
-  for (const match of value.matchAll(pattern)) {
-    const phrase = match[0].trim();
-    const start = match.index ?? 0;
-    if (start > 0 && tokenize(phrase).length > 0) return true;
-  }
-  return false;
-}
-
 function classifyTerm(term: string, entities: Set<string>): KeywordCategory {
   const clean = normalize(term);
   if (entities.has(clean)) return "ENTIDAD";
@@ -104,49 +94,127 @@ function classifyTerm(term: string, entities: Set<string>): KeywordCategory {
 
 type TermRecord = {
   occurrenceCount: number;
-  sources: Set<KeywordSource>;
-  perVideo: Map<string, number>;
+  sourceVideoIds: Map<KeywordSource, Set<string>>;
 };
 
 type AnalyzedVideo = CompetitorVideo & { description: string };
 
-function collectTermRecords(videos: CompetitorVideoSource[]): { records: Map<string, TermRecord>; entities: Set<string> } {
-  const records = new Map<string, TermRecord>();
-  const entities = new Set<string>();
+const DESCRIPTION_BOILERPLATE = /\b(suscr[ií]bete|suscribirse|subscribe|subscription|activa la campana|notification bell|like y comparte|like and subscribe|aviso profesional|disclaimer|no sustituye|not a substitute|consulta a un profesional|consult (a|your) professional|gracias por ver|thanks for watching)\b/i;
+const GENERIC_TOPIC_WORDS = new Set("dia día noche night day video videos canal channel oración oracion prayer prayers".split(/\s+/));
 
-  for (const video of videos) {
-    const entityText = `${video.title}\n${video.description.slice(0, 5000)}`;
-    if (isEntityPhrase(entityText)) {
-      const pattern = /(?<![\p{L}\p{N}])[A-ZÁÉÍÓÚÜÑ][\p{L}\p{N}'’.-]+(?:\s+[A-ZÁÉÍÓÚÜÑ][\p{L}\p{N}'’.-]+){0,2}/gu;
-      for (const match of entityText.matchAll(pattern)) {
-        const start = match.index ?? 0;
-        if (start > 0 && !/[.!?\n]\s*$/.test(entityText.slice(0, start))) entities.add(normalize(match[0].trim()));
+function isNumericToken(value: string): boolean {
+  return /^\p{N}+$/u.test(value);
+}
+
+function addTerm(records: Map<string, TermRecord>, term: string, source: KeywordSource, videoId: string, occurrences = 1): void {
+  const clean = normalize(term).trim();
+  if (!clean || !clean.split(/\s+/).some((word) => /\p{L}/u.test(word))) return;
+  const record = records.get(clean) ?? { occurrenceCount: 0, sourceVideoIds: new Map() };
+  const videoIds = record.sourceVideoIds.get(source) ?? new Set<string>();
+  videoIds.add(videoId);
+  record.sourceVideoIds.set(source, videoIds);
+  record.occurrenceCount += occurrences;
+  records.set(clean, record);
+}
+
+/** Extract words and title phrases while retaining useful internal stop words (e.g. "sleep in peace"). */
+function extractPhrases(text: string): string[] {
+  const words = normalize(text).match(/[\p{L}\p{N}]+/gu) ?? [];
+  const numericEntities = new Set([...text.matchAll(/\p{Lu}[\p{L}\p{M}'’.-]*\s+\p{N}{1,4}/gu)].map((match) => normalize(match[0])));
+  const terms = new Set<string>();
+  for (let start = 0; start < words.length; start += 1) {
+    for (let end = start; end < Math.min(words.length, start + 3); end += 1) {
+      const raw = words.slice(start, end + 1);
+      while (raw.length && STOP_WORDS.has(raw[0])) raw.shift();
+      while (raw.length && STOP_WORDS.has(raw[raw.length - 1])) raw.pop();
+      if (!raw.length) continue;
+      const contentWords = raw.filter((word) => !STOP_WORDS.has(word));
+      if (contentWords.length > 3) continue;
+      if (raw.length === 1) {
+        const [word] = raw;
+        if (!isNumericToken(word) && (word.length > 2 || /^\p{L}\p{N}+$/u.test(word))) terms.add(word);
+        continue;
       }
-    }
-    const sources: Array<{ source: KeywordSource; text: string }> = [
-      { source: "título", text: video.title },
-      { source: "descripción", text: video.description.slice(0, 5000) },
-      ...(video.youtubeTags ?? []).map((tag) => ({ source: "tag_real_youtube" as const, text: tag })),
-    ];
-    for (const { source, text } of sources) {
-      const rawWords = normalize(text).match(/[\p{L}\p{N}]+/gu) ?? [];
-      const words = rawWords.filter(isKeywordToken);
-      const terms = [...words];
-      for (let index = 0; index < rawWords.length - 1; index += 1) {
-        if (isKeywordToken(rawWords[index]) && isKeywordToken(rawWords[index + 1])) {
-          terms.push(`${rawWords[index]} ${rawWords[index + 1]}`);
-        }
-      }
-      for (const term of terms) {
-        const record = records.get(term) ?? { occurrenceCount: 0, sources: new Set<KeywordSource>(), perVideo: new Map<string, number>() };
-        record.occurrenceCount += 1;
-        record.sources.add(source);
-        record.perVideo.set(video.id, (record.perVideo.get(video.id) ?? 0) + 1);
-        records.set(term, record);
-      }
+      const phrase = raw.join(" ");
+      const containsNumber = raw.some(isNumericToken);
+      const hasNumericEntity = [...numericEntities].some((entity) => phrase.includes(entity));
+      if (contentWords.length >= 2 && raw.some((word) => /\p{L}/u.test(word)) && (!containsNumber || hasNumericEntity)) terms.add(phrase);
     }
   }
-  return { records, entities };
+  return [...terms];
+}
+
+function cleanDescription(description: string): string {
+  return description.slice(0, 5000)
+    .split(/\r?\n|(?<=[.!?])\s+/u)
+    .map((block) => block.replace(/https?:\/\/\S+|www\.\S+/giu, " ").replace(/#[\p{L}\p{N}_-]+/gu, " ").replace(/\s+/g, " ").trim())
+    .filter((block) => block && !DESCRIPTION_BOILERPLATE.test(block))
+    .join("\n\n");
+}
+
+function collectDescriptionTerms(videos: CompetitorVideoSource[]): Map<string, TermRecord> {
+  const blocksByVideo = videos.map((video) => cleanDescription(video.description).split(/\r?\n+/).filter(Boolean));
+  const blockFrequency = new Map<string, number>();
+  for (const blocks of blocksByVideo) {
+    for (const block of new Set(blocks)) {
+      const signature = normalize(block).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+      if (signature.length >= 24) blockFrequency.set(signature, (blockFrequency.get(signature) ?? 0) + 1);
+    }
+  }
+  const boilerplateThreshold = Math.max(2, Math.ceil(videos.length * 0.6));
+  const records = new Map<string, TermRecord>();
+  videos.forEach((video, index) => {
+    const usefulText = blocksByVideo[index].filter((block) => {
+      const signature = normalize(block).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+      return (blockFrequency.get(signature) ?? 0) < boilerplateThreshold;
+    }).join(" ");
+    for (const term of extractPhrases(usefulText)) addTerm(records, term, "descripción", video.id);
+  });
+  return records;
+}
+
+function collectSourceTerms(videos: CompetitorVideoSource[], source: "título" | "tag_real_youtube"): Map<string, TermRecord> {
+  const records = new Map<string, TermRecord>();
+  for (const video of videos) {
+    if (source === "título") {
+      for (const term of extractPhrases(video.title)) addTerm(records, term, source, video.id);
+      continue;
+    }
+    for (const tag of video.youtubeTags ?? []) {
+      // Keep each official tag as YouTube returned it; do not merge it with descriptive text.
+      addTerm(records, tag, source, video.id);
+    }
+  }
+  return records;
+}
+
+function mergeTermRecords(...sources: Map<string, TermRecord>[]): Map<string, TermRecord> {
+  const merged = new Map<string, TermRecord>();
+  for (const sourceRecords of sources) {
+    for (const [term, sourceRecord] of sourceRecords) {
+      const target = merged.get(term) ?? { occurrenceCount: 0, sourceVideoIds: new Map() };
+      target.occurrenceCount += sourceRecord.occurrenceCount;
+      for (const [source, ids] of sourceRecord.sourceVideoIds) {
+        const targetIds = target.sourceVideoIds.get(source) ?? new Set<string>();
+        for (const id of ids) targetIds.add(id);
+        target.sourceVideoIds.set(source, targetIds);
+      }
+      merged.set(term, target);
+    }
+  }
+  return merged;
+}
+
+function titleEntities(videos: CompetitorVideoSource[]): Set<string> {
+  const entities = new Set<string>();
+  const pattern = /(?<![\p{L}\p{N}])[A-ZÁÉÍÓÚÜÑ][\p{L}\p{N}'’.-]+(?:\s+[A-ZÁÉÍÓÚÜÑ][\p{L}\p{N}'’.-]+){0,2}/gu;
+  for (const video of videos) {
+    for (const match of video.title.matchAll(pattern)) {
+      const start = match.index ?? 0;
+      if (start > 0 && !/[.!?]\s*$/.test(video.title.slice(0, start))) entities.add(normalize(match[0].trim()));
+    }
+  }
+  return entities;
 }
 
 function titlePhrases(videos: CompetitorVideoSource[], edge: "first" | "last"): TitlePhrase[] {
@@ -214,12 +282,15 @@ function buildKeywordInsights(
   const videosById = new Map(videos.map((video) => [video.id, video]));
   const insights: KeywordInsight[] = [];
   for (const [term, record] of records) {
-    const videoIds = [...record.perVideo.keys()];
+    const videoIds = [...new Set([...record.sourceVideoIds.values()].flatMap((ids) => [...ids]))];
     const matchingVideos = videoIds.map((id) => videosById.get(id)).filter((video): video is AnalyzedVideo => video !== undefined);
     const winnerFrequency = videoIds.filter((id) => winnerIds.has(id)).length;
     const baselineShare = totalCount ? round(videoIds.length / totalCount, 3) : null;
     const winnerShare = winnerCount ? round(winnerFrequency / winnerCount, 3) : null;
     const winnerLift = baselineShare && winnerShare !== null ? round(winnerShare / baselineShare) : null;
+    const titleFrequency = record.sourceVideoIds.get("título")?.size ?? 0;
+    const descriptionFrequency = record.sourceVideoIds.get("descripción")?.size ?? 0;
+    const tagFrequency = record.sourceVideoIds.get("tag_real_youtube")?.size ?? 0;
     insights.push({
       term,
       category: classifyTerm(term, entities),
@@ -229,7 +300,10 @@ function buildKeywordInsights(
       winnerShare,
       winnerLift,
       occurrences: record.occurrenceCount,
-      sources: [...record.sources],
+      titleFrequency,
+      descriptionFrequency,
+      tagFrequency,
+      sources: [...record.sourceVideoIds.keys()],
       videoIds,
       exampleTitles: matchingVideos.slice(0, 5).map((video) => video.title),
       averageViews: average(matchingVideos.map((video) => video.views)),
@@ -266,12 +340,58 @@ function makeCadence(videos: AnalyzedVideo[], winners: AnalyzedVideo[], now: num
   };
 }
 
+function topicWordCount(term: string): number {
+  return term.split(/\s+/).filter((word) => !STOP_WORDS.has(word) && /[\p{L}\p{N}]/u.test(word)).length;
+}
+
+function isNamedNumberTopic(term: string): boolean {
+  const [name, number] = term.split(/\s+/);
+  return Boolean(name && number && !GENERIC_TOPIC_WORDS.has(name) && /\p{L}/u.test(name) && isNumericToken(number));
+}
+
+function assignTopics(videos: AnalyzedVideo[]): AnalyzedVideo[] {
+  const frequencies = new Map<string, number>();
+  const perVideo = new Map<string, Set<string>>();
+  for (const video of videos) {
+    const terms = new Set(extractPhrases(video.title).filter((term) => {
+      const content = term.split(/\s+/).filter((word) => !STOP_WORDS.has(word));
+      const lexical = content.filter((word) => /\p{L}/u.test(word));
+      const supportedPhrase = lexical.length >= 2 || (lexical.length === 1 && content.some(isNumericToken) && !GENERIC_TOPIC_WORDS.has(lexical[0]));
+      const genericNumberLabel = content.some(isNumericToken) && GENERIC_TOPIC_WORDS.has(lexical[0]);
+      return supportedPhrase && !isNumericToken(content[0]) && !genericNumberLabel && !lexical.every((word) => GENERIC_TOPIC_WORDS.has(word));
+    }));
+    perVideo.set(video.id, terms);
+    for (const term of terms) frequencies.set(term, (frequencies.get(term) ?? 0) + 1);
+  }
+  const ranked = [...frequencies.entries()]
+    .filter(([, frequency]) => frequency >= 2)
+    .map(([term, frequency]) => {
+      const words = topicWordCount(term);
+      const idf = 1 + Math.log((videos.length + 1) / (frequency + 1));
+      // Interpretable specificity: recurring support, phrase length, and inverse document frequency.
+      const specificity = frequency * (1 + Math.max(0, words - 1) * 0.35) * idf;
+      return { term, frequency, specificity, namedNumber: isNamedNumberTopic(term) };
+    })
+    .sort((a, b) => b.specificity - a.specificity || b.frequency - a.frequency || Number(b.namedNumber) - Number(a.namedNumber) || b.term.length - a.term.length || a.term.localeCompare(b.term));
+
+  return videos.map((video) => {
+    const terms = perVideo.get(video.id) ?? new Set<string>();
+    const candidates = ranked.filter((candidate) => terms.has(candidate.term));
+    const primaryTopic = candidates[0]?.term ?? "Tema sin clasificar";
+    const secondaryTopics = candidates.slice(1, 3).map((candidate) => candidate.term);
+    return { ...video, primaryTopic, secondaryTopics, topicCluster: primaryTopic };
+  });
+}
+
 function makeTopicClusters(videos: AnalyzedVideo[]): TopicCluster[] {
   const topics = new Map<string, CompetitorVideo[]>();
   for (const video of videos) {
-    const list = topics.get(video.topicCluster) ?? [];
-    list.push(video);
-    topics.set(video.topicCluster, list);
+    const labels = [video.primaryTopic, ...video.secondaryTopics].filter((topic) => topic !== "Tema sin clasificar");
+    for (const topic of labels) {
+      const list = topics.get(topic) ?? [];
+      list.push(video);
+      topics.set(topic, list);
+    }
   }
   return [...topics.entries()]
     .map(([topic, items]) => ({
@@ -281,7 +401,7 @@ function makeTopicClusters(videos: AnalyzedVideo[]): TopicCluster[] {
       averageViewsToSubscribers: average(items.map((video) => video.metrics.viewsToSubscribers)),
       averageViewsVsMedian: average(items.map((video) => video.metrics.viewsVsMedian)),
     }))
-    .sort((a, b) => b.videoCount - a.videoCount || (b.averageViews ?? -1) - (a.averageViews ?? -1))
+    .sort((a, b) => b.videoCount - a.videoCount || (b.averageViews ?? -1) - (a.averageViews ?? -1) || a.topic.localeCompare(b.topic))
     .slice(0, 12);
 }
 
@@ -353,28 +473,46 @@ export function analyzeCompetitor(
       },
       isWinner: signals.length > 0,
       winnerSignals: signals,
+      primaryTopic: "Tema sin clasificar",
+      secondaryTopics: [],
       topicCluster: "Sin tema dominante",
     };
   });
   const winnerIds = new Set(preliminary.filter((video) => video.isWinner).map((video) => video.id));
-  const { records, entities } = collectTermRecords(sourceVideos);
-  const allInsights = buildKeywordInsights(preliminary, records, entities, winnerIds);
-  const titleTermSet = new Set(analyzeTitlePatterns(sourceVideos).frequentTitleTerms);
-  const keywords = allInsights
+  const titleRecords = collectSourceTerms(sourceVideos, "título");
+  const descriptionRecords = collectDescriptionTerms(sourceVideos);
+  const tagRecords = collectSourceTerms(sourceVideos, "tag_real_youtube");
+  const entities = titleEntities(sourceVideos);
+  const titleKeywords = buildKeywordInsights(preliminary, titleRecords, entities, winnerIds)
     .filter((item) => item.videoFrequency >= 2)
+    .sort((a, b) => b.videoFrequency - a.videoFrequency || b.titleFrequency - a.titleFrequency || topicWordCount(b.term) - topicWordCount(a.term) || a.term.localeCompare(b.term))
+    .slice(0, 30);
+  const descriptionTerms = buildKeywordInsights(preliminary, descriptionRecords, entities, winnerIds)
+    .filter((item) => item.videoFrequency >= 2)
+    .sort((a, b) => b.videoFrequency - a.videoFrequency || topicWordCount(b.term) - topicWordCount(a.term) || a.term.localeCompare(b.term))
+    .slice(0, 30);
+  const youtubeTags = buildKeywordInsights(preliminary, tagRecords, entities, winnerIds)
     .sort((a, b) => b.videoFrequency - a.videoFrequency || a.term.localeCompare(b.term))
     .slice(0, 30);
-  const winnerKeywords = allInsights
-    .filter((item) => item.winnerFrequency > 0)
-    .sort((a, b) => (b.winnerLift ?? 0) - (a.winnerLift ?? 0) || b.winnerFrequency - a.winnerFrequency || a.term.localeCompare(b.term))
+  const coreRecords = mergeTermRecords(titleRecords, tagRecords);
+  const allInsights = buildKeywordInsights(preliminary, coreRecords, entities, winnerIds);
+  // Main keywords combine titles and official tags only; descriptions are always reported separately.
+  const keywords = allInsights
+    .filter((item) => item.videoFrequency >= 2)
+    .sort((a, b) => b.videoFrequency - a.videoFrequency || (b.titleFrequency + b.tagFrequency) - (a.titleFrequency + a.tagFrequency) || a.term.localeCompare(b.term))
     .slice(0, 30);
-  const topicCandidates = allInsights.filter((item) => item.category === "TEMA" && item.sources.includes("título"));
-  const videos = preliminary.map((video) => {
-    const candidates = topicCandidates.filter((item) => item.videoIds.includes(video.id));
-    candidates.sort((a, b) => b.videoFrequency - a.videoFrequency || b.term.length - a.term.length);
-    const fallbackTitleTerm = tokenize(video.title).find((term) => titleTermSet.has(term));
-    return { ...video, topicCluster: candidates[0]?.term ?? fallbackTitleTerm ?? "Tema sin clasificar" };
-  });
+  // Require repeated winner support before lift is considered; the transparent tie-break order
+  // is winner support, title/tag support, lift, then total video support.
+  const winnerKeywords = allInsights
+    .filter((item) => item.winnerFrequency >= 2 && item.videoFrequency >= 2 && item.titleFrequency + item.tagFrequency > 0)
+    .sort((a, b) => b.winnerFrequency - a.winnerFrequency
+      || (b.titleFrequency + b.tagFrequency) - (a.titleFrequency + a.tagFrequency)
+      || (b.winnerLift ?? 0) - (a.winnerLift ?? 0)
+      || b.videoFrequency - a.videoFrequency
+      || topicWordCount(b.term) - topicWordCount(a.term)
+      || a.term.localeCompare(b.term))
+    .slice(0, 30);
+  const videos = assignTopics(preliminary);
   const winners = videos.filter((video) => video.isWinner).sort((a, b) => (b.metrics.viewsVsMedian ?? -1) - (a.metrics.viewsVsMedian ?? -1));
   const patterns = analyzeTitlePatterns(sourceVideos);
   const clusters = makeTopicClusters(videos);
@@ -410,6 +548,9 @@ export function analyzeCompetitor(
     },
     videos: publicVideos,
     winners: publicWinners,
+    titleKeywords,
+    descriptionTerms,
+    youtubeTags,
     keywords,
     winnerKeywords,
     titlePatterns: patterns,

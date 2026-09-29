@@ -48,6 +48,9 @@ export type CompetitorVideo = Omit<CompetitorVideoSource, "description"> & {
   };
   isWinner: boolean;
   winnerSignals: string[];
+  /** Main recurring title topic; topicCluster remains as a UI compatibility alias. */
+  primaryTopic: string;
+  secondaryTopics: string[];
   topicCluster: string;
 };
 
@@ -60,6 +63,9 @@ export type KeywordInsight = {
   winnerShare: number | null;
   winnerLift: number | null;
   occurrences: number;
+  titleFrequency: number;
+  descriptionFrequency: number;
+  tagFrequency: number;
   sources: KeywordSource[];
   videoIds: string[];
   exampleTitles: string[];
@@ -139,6 +145,9 @@ export type CompetitorReport = {
   };
   videos: CompetitorVideo[];
   winners: CompetitorVideo[];
+  titleKeywords: KeywordInsight[];
+  descriptionTerms: KeywordInsight[];
+  youtubeTags: KeywordInsight[];
   keywords: KeywordInsight[];
   winnerKeywords: KeywordInsight[];
   titlePatterns: TitlePatternAnalysis;

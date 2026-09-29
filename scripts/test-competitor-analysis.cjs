@@ -83,8 +83,8 @@ assert.equal(report.videos[0].metrics.viewsPerDay, 1000);
 assert.equal(report.videos[0].isWinner, true);
 assert.equal(report.winners[0].id, "one");
 assert.equal(Object.hasOwn(report.videos[0], "description"), false, "descriptions stay server-side after keyword extraction");
-assert.ok(report.winnerKeywords.some((item) => item.term === "ansiedad" && item.category === "DOLOR"));
-assert.ok(report.winnerKeywords.some((item) => item.term === "ansiedad" && item.sources.includes("tag_real_youtube")));
+assert.ok(report.youtubeTags.some((item) => item.term === "ansiedad" && item.sources.includes("tag_real_youtube")));
+assert.ok(report.winnerKeywords.every((item) => item.winnerFrequency >= 2), "winner terms require support from at least two winners");
 assert.equal(report.cadence.byWeekday.length, 7);
 assert.equal(report.cadence.videosLast30Days, 4);
 assert.equal(report.concentration.top3Percent, 90.48);
@@ -93,6 +93,60 @@ const zeroViewsReport = analyzeCompetitor(channel, videos.map((video) => ({ ...v
 assert.equal(zeroViewsReport.sample.averageViews, 0);
 assert.equal(zeroViewsReport.concentration.sampleViews, 0);
 assert.equal(zeroViewsReport.concentration.top3Percent, null);
+
+function syntheticVideo(id, title, views, description = "", youtubeTags = []) {
+  return { id, title, description, publishedAt: "2026-09-28T12:00:00.000Z", durationSeconds: 600, views, likes: 0, comments: 0, thumbnail: null, youtubeTags };
+}
+
+const semanticChannel = { ...channel, subscribers: 100 };
+const semanticVideos = [
+  ...Array.from({ length: 5 }, (_, index) => syntheticVideo(`winner-${index}`, `Strong topic restful night prayer ${index}`, 1000, `Unique winner opening ${index}.\n\nRepeated editorial block for search indexing and audience discovery at https://example.com #repeatedmeta.`)),
+  ...Array.from({ length: 5 }, (_, index) => syntheticVideo(`base-${index}`, `General subject ${index}`, 100, `Unique sample opening ${index}.\n\nRepeated editorial block for search indexing and audience discovery at https://example.com #repeatedmeta.`)),
+];
+semanticVideos[0].description += "\n\nQuiet harbor reflection appears in descriptions.";
+semanticVideos[1].description += "\n\nQuiet harbor reflection appears in descriptions.";
+semanticVideos[0].title += " rare quasar signal 2026";
+semanticVideos[1].title += " rare quasar signal 2026";
+semanticVideos[0].youtubeTags = ["official-tag", "strong topic"];
+semanticVideos[1].youtubeTags = ["official-tag"];
+const semanticReport = analyzeCompetitor(semanticChannel, semanticVideos, now);
+
+// A. Repeated description blocks, links, and hashtags are excluded from the secondary signal and never enter winners.
+assert.ok(!semanticReport.descriptionTerms.some((item) => item.term.includes("editorial block") || item.term.includes("repeatedmeta")));
+assert.ok(semanticReport.descriptionTerms.some((item) => item.term === "quiet harbor reflection"));
+assert.ok(!semanticReport.winnerKeywords.some((item) => item.term.includes("indexing")));
+
+// B. Repeated winner support sorts ahead of a rare phrase even when that phrase has high lift.
+const strongIndex = semanticReport.winnerKeywords.findIndex((item) => item.term === "strong topic");
+const rareIndex = semanticReport.winnerKeywords.findIndex((item) => item.term === "rare quasar signal");
+assert.ok(strongIndex >= 0 && rareIndex >= 0 && strongIndex < rareIndex);
+
+// C. Standalone numeric tokens are not emitted as winner keywords.
+assert.ok(!semanticReport.winnerKeywords.some((item) => /^\d+$/u.test(item.term)));
+assert.ok(!semanticReport.winnerKeywords.some((item) => item.term === "2026"));
+
+// D. General n-gram extraction retains useful two- and three-word title phrases.
+assert.ok(semanticReport.titleKeywords.some((item) => item.term === "restful night"));
+assert.ok(semanticReport.titleKeywords.some((item) => item.term === "restful night prayer"));
+
+// E. Clusters prefer repeated, specific phrases to generic single words.
+assert.ok(semanticReport.topicClusters.every((item) => item.topic !== "day" && item.topic !== "noche"));
+assert.ok(semanticReport.videos.every((video) => Array.isArray(video.secondaryTopics)));
+const genericDayReport = analyzeCompetitor(semanticChannel, Array.from({ length: 8 }, (_, index) => syntheticVideo(`day-${index}`, `Día 12 mensaje general ${index}`, 1000, "")), now);
+assert.ok(genericDayReport.topicClusters.every((item) => !item.topic.startsWith("día 12")));
+
+// F. Repeated Salmo 91 labels emerge from titles without a religion-specific rule.
+const psalmVideos = [
+  ...Array.from({ length: 17 }, (_, index) => syntheticVideo(`psalm-${index}`, `Salmo 91 para descansar en casa ${index}`, 1000, "")),
+  ...Array.from({ length: 5 }, (_, index) => syntheticVideo(`other-${index}`, `Mensaje general de esperanza ${index}`, 100, "")),
+];
+const psalmReport = analyzeCompetitor(semanticChannel, psalmVideos, now);
+assert.ok(psalmReport.topicClusters.some((item) => item.topic.startsWith("salmo 91") && item.videoCount >= 17));
+assert.ok(psalmReport.videos.filter((video) => video.title.startsWith("Salmo 91")).every((video) => video.primaryTopic.startsWith("salmo 91")));
+
+// G. Official tags remain a distinct source and never leak into title-only keywords.
+assert.ok(semanticReport.youtubeTags.some((item) => item.term === "official-tag" && item.tagFrequency === 2));
+assert.ok(!semanticReport.titleKeywords.some((item) => item.term === "official-tag"));
 
 const hiddenSubscribersReport = analyzeCompetitor({ ...channel, subscribers: null }, videos, now);
 assert.equal(hiddenSubscribersReport.videos[0].metrics.viewsToSubscribers, null);

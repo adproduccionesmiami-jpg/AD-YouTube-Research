@@ -165,12 +165,23 @@ export default function CompetitorReportView({ report, sortBy, onSortChange }: {
 
       <div className={styles.twoColumns}>
         <section className={styles.section}>
-          <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Inteligencia de palabras</h2><p className={styles.sectionSubtitle}>Términos extraídos de títulos, descripciones y tags reales disponibles.</p></div><span className={styles.sectionBadge}>Muestra completa</span></div>
-          <KeywordTable items={report.keywords} />
+          <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Keywords de títulos</h2><p className={styles.sectionSubtitle}>Unigramas, bigramas y trigramas extraídos únicamente de títulos.</p></div><span className={styles.sectionBadge}>Título</span></div>
+          <KeywordTable items={report.titleKeywords} />
         </section>
         <section className={styles.section}>
-          <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Palabras de videos ganadores</h2><p className={styles.sectionSubtitle}>Lift compara la presencia entre winners y la muestra. No es una causalidad.</p></div><span className={styles.sectionBadge}>Solo winners</span></div>
+          <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Palabras y frases de videos ganadores</h2><p className={styles.sectionSubtitle}>Prioriza títulos y tags reales. Orden transparente: soporte winner, soporte de título/tag, lift y frecuencia total. Lift no implica causalidad.</p></div><span className={styles.sectionBadge}>Título + tags</span></div>
           <KeywordTable items={report.winnerKeywords} winnerMode />
+        </section>
+      </div>
+
+      <div className={styles.twoColumns}>
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Tags reales de YouTube</h2><p className={styles.sectionSubtitle}>Tags oficiales recibidos por video.list, sin mezclarlos con el texto del título o la descripción.</p></div><span className={styles.sectionBadge}>Fuente oficial</span></div>
+          <KeywordTable items={report.youtubeTags} />
+        </section>
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Términos recurrentes en descripciones</h2><p className={styles.sectionSubtitle}>Señal secundaria. Links, hashtags, llamadas promocionales y bloques repetidos se excluyen solo del análisis.</p></div><span className={styles.sectionBadge}>Descripción</span></div>
+          <KeywordTable items={report.descriptionTerms} />
         </section>
       </div>
 
