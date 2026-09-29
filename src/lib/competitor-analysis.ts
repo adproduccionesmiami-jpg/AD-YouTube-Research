@@ -82,13 +82,29 @@ function isKeywordToken(word: string): boolean {
   return !STOP_WORDS.has(word) && (word.length > 2 || /^\d{2,}$/.test(word));
 }
 
+function containsLabel(term: string, labels: string[]): boolean {
+  return labels.some((label) => {
+    const normalized = normalize(label);
+    let from = 0;
+    while (from < term.length) {
+      const index = term.indexOf(normalized, from);
+      if (index < 0) return false;
+      const before = index > 0 ? term[index - 1] : "";
+      const after = term[index + normalized.length] ?? "";
+      if ((!before || !/[\p{L}\p{N}]/u.test(before)) && (!after || !/[\p{L}\p{N}]/u.test(after))) return true;
+      from = index + 1;
+    }
+    return false;
+  });
+}
+
 function classifyTerm(term: string, entities: Set<string>): KeywordCategory {
   const clean = normalize(term);
+  if (containsLabel(clean, PAIN_TERMS)) return "DOLOR";
+  if (containsLabel(clean, BENEFIT_TERMS)) return "BENEFICIO";
+  if (containsLabel(clean, INTENT_TERMS)) return "INTENCIÓN";
+  if (containsLabel(clean, CONTEXT_TERMS)) return "CONTEXTO";
   if (entities.has(clean)) return "ENTIDAD";
-  if (INTENT_TERMS.some((item) => clean.includes(normalize(item)))) return "INTENCIÓN";
-  if (PAIN_TERMS.some((item) => clean.includes(normalize(item)))) return "DOLOR";
-  if (BENEFIT_TERMS.some((item) => clean.includes(normalize(item)))) return "BENEFICIO";
-  if (CONTEXT_TERMS.some((item) => clean.includes(normalize(item)))) return "CONTEXTO";
   return "TEMA";
 }
 
@@ -207,11 +223,35 @@ function mergeTermRecords(...sources: Map<string, TermRecord>[]): Map<string, Te
 
 function titleEntities(videos: CompetitorVideoSource[]): Set<string> {
   const entities = new Set<string>();
-  const pattern = /(?<![\p{L}\p{N}])[A-ZÁÉÍÓÚÜÑ][\p{L}\p{N}'’.-]+(?:\s+[A-ZÁÉÍÓÚÜÑ][\p{L}\p{N}'’.-]+){0,2}/gu;
+  const properNameToken = /(?<![\p{L}\p{N}])(?:\p{Lu}\p{Ll}[\p{L}\p{M}'’.-]*|\p{Lu})(?![\p{L}\p{N}])/gu;
+  const numberedIdentifier = /(?<![\p{L}\p{N}])[\p{L}][\p{L}\p{M}'’.-]*\s+\p{N}{1,4}(?![\p{L}\p{N}])/gu;
   for (const video of videos) {
-    for (const match of video.title.matchAll(pattern)) {
-      const start = match.index ?? 0;
-      if (start > 0 && !/[.!?]\s*$/.test(video.title.slice(0, start))) entities.add(normalize(match[0].trim()));
+    const tokens = [...video.title.matchAll(properNameToken)].map((match) => ({ text: match[0], start: match.index ?? 0, end: (match.index ?? 0) + match[0].length }));
+    let runStart = 0;
+    while (runStart < tokens.length) {
+      let runEnd = runStart + 1;
+      while (runEnd < tokens.length && /^\s+$/u.test(video.title.slice(tokens[runEnd - 1].end, tokens[runEnd].start))) runEnd += 1;
+      for (let startIndex = runStart; startIndex < runEnd; startIndex += 1) {
+        for (let endIndex = startIndex + 1; endIndex < Math.min(runEnd, startIndex + 3); endIndex += 1) {
+          const start = tokens[startIndex].start;
+          const phrase = video.title.slice(start, tokens[endIndex].end);
+          const preceding = video.title.slice(0, start).trimEnd();
+          const previousCharacter = preceding.at(-1) ?? "";
+          const words = normalize(phrase).split(/\s+/);
+          const followsSeparator = !previousCharacter || /[.!?;:,|/\\()[\]{}—–_-]/u.test(previousCharacter);
+          const originalWords = phrase.split(/\s+/);
+          const containsFunctionWord = words.some((word, index) => STOP_WORDS.has(word)
+            && !(index === words.length - 1 && originalWords[index]?.length === 1 && /\p{Lu}/u.test(originalWords[index])));
+          if (!followsSeparator && !containsFunctionWord && !containsLabel(phrase, [...PAIN_TERMS, ...BENEFIT_TERMS, ...INTENT_TERMS, ...CONTEXT_TERMS])) {
+            entities.add(normalize(phrase.trim()));
+          }
+        }
+      }
+      runStart = runEnd;
+    }
+    for (const match of video.title.matchAll(numberedIdentifier)) {
+      const term = normalize(match[0].trim());
+      if (!containsLabel(term, [...PAIN_TERMS, ...BENEFIT_TERMS, ...INTENT_TERMS, ...CONTEXT_TERMS])) entities.add(term);
     }
   }
   return entities;

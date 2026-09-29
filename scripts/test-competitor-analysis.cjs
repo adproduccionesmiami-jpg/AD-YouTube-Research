@@ -144,6 +144,35 @@ const psalmReport = analyzeCompetitor(semanticChannel, psalmVideos, now);
 assert.ok(psalmReport.topicClusters.some((item) => item.topic.startsWith("salmo 91") && item.videoCount >= 17));
 assert.ok(psalmReport.videos.filter((video) => video.title.startsWith("Salmo 91")).every((video) => video.primaryTopic.startsWith("salmo 91")));
 
+const taxonomyTitle = "Exploring Donald Trump and New York with Tesla Model Y and iPhone 17 before Salmo 91: Dormir en Paz, Protección ante Ansiedad y Miedo en la Noche";
+const taxonomyReport = analyzeCompetitor(semanticChannel, Array.from({ length: 6 }, (_, index) => syntheticVideo(`taxonomy-${index}`, taxonomyTitle, 1000, "", ["Tesla Model Y"])), now);
+const taxonomyKeyword = (term) => taxonomyReport.titleKeywords.find((item) => item.term === term);
+const taxonomyTag = (term) => taxonomyReport.youtubeTags.find((item) => item.term === term);
+assert.equal(taxonomyKeyword("dormir").category, "INTENCIÓN");
+assert.equal(taxonomyKeyword("ansiedad").category, "DOLOR");
+assert.equal(taxonomyKeyword("miedo").category, "DOLOR");
+assert.equal(taxonomyKeyword("protección").category, "BENEFICIO");
+assert.equal(taxonomyKeyword("paz").category, "BENEFICIO");
+assert.equal(taxonomyKeyword("noche").category, "CONTEXTO");
+assert.equal(taxonomyKeyword("donald trump").category, "ENTIDAD");
+assert.equal(taxonomyKeyword("new york").category, "ENTIDAD");
+assert.equal(taxonomyTag("tesla model y").category, "ENTIDAD");
+assert.equal(taxonomyKeyword("iphone 17").category, "ENTIDAD");
+assert.equal(taxonomyKeyword("salmo 91").category, "ENTIDAD");
+assert.equal(taxonomyKeyword("salmo").category, "TEMA");
+assert.equal(taxonomyKeyword("exploring").category, "TEMA", "sentence-initial capitalization alone is not an entity signal");
+const initialIntentReport = analyzeCompetitor(semanticChannel, Array.from({ length: 2 }, (_, index) => syntheticVideo(`initial-${index}`, `Oración para dormir en paz ${index}`, 1000, "")), now);
+assert.equal(initialIntentReport.titleKeywords.find((item) => item.term === "oración").category, "INTENCIÓN");
+assert.deepEqual(taxonomyReport.winnerKeywords.slice(0, 8).map((item) => item.term), [
+  "exploring donald trump", "salmo 91 dormir", "ansiedad y miedo", "donald trump",
+  "dormir en paz", "exploring donald", "iphone 17", "new york",
+], "taxonomy changes must not alter the validated winner keyword ordering");
+assert.deepEqual(psalmReport.topicClusters.slice(0, 4).map((item) => item.topic), [
+  "descansar en casa", "salmo 91", "general de esperanza", "mensaje general",
+], "taxonomy changes must not degrade the validated topic cluster ordering");
+const separatorEntityReport = analyzeCompetitor(semanticChannel, Array.from({ length: 2 }, (_, index) => syntheticVideo(`separator-${index}`, `A travel guide: New York ${index}`, 1000, "")), now);
+assert.equal(separatorEntityReport.titleKeywords.find((item) => item.term === "new york").category, "TEMA", "capitalization after punctuation alone is not an entity signal");
+
 // G. Official tags remain a distinct source and never leak into title-only keywords.
 assert.ok(semanticReport.youtubeTags.some((item) => item.term === "official-tag" && item.tagFrequency === 2));
 assert.ok(!semanticReport.titleKeywords.some((item) => item.term === "official-tag"));
@@ -200,7 +229,7 @@ assert.ok(noVideosReport.warnings.some((warning) => warning.includes("No se enco
   } finally {
     global.fetch = originalFetch;
   }
-  console.log("Competitor tests passed (reference parsing, v0.02 language/opportunity regression, 3-call data batching/cache, metrics, winners, tag/keyword separation, missing data and quota errors).");
+  console.log("Competitor tests passed (reference parsing, v0.02 regressions, metrics, winners, semantic taxonomy, winner-order and cluster snapshots, tag separation, missing data and quota errors).");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
