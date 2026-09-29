@@ -24,6 +24,7 @@ import {
 import { classifyDuration, formatDate, formatDuration, formatNumber, formatRatio } from "@/lib/youtube-format";
 import { getFormFilterErrors, parseOptionalNumber } from "@/lib/opportunity-filters";
 import type { ResearchFailure, ResearchFormValues, ResearchRequest, ResearchSuccess, ResearchVideo } from "@/types/research";
+import CompetitorNavigationLink from "@/components/competitor/CompetitorNavigationLink";
 
 const DEFAULT_FORM: ResearchFormValues = {
   topic: "",
@@ -297,6 +298,7 @@ export default function Home() {
           <span className="brand-name">AD <b>YouTube Research</b></span>
         </a>
         <div className="topbar-right">
+          <CompetitorNavigationLink />
           <span className="workspace-tag"><span className="workspace-dot" /> ESPACIO PRIVADO</span>
           <span className="topbar-divider" />
           <span className="api-mark"><Play size={14} fill="currentColor" /> API v3</span>
