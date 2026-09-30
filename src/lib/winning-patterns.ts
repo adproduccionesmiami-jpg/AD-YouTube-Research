@@ -1,5 +1,6 @@
 import type { CompetitorReport, CompetitorVideo, KeywordCategory } from "@/types/competitor";
 import type { PatternDimension, PatternEvidence, PatternStatus, WinningPattern, WinningPatternsAnalysis } from "@/types/winning-patterns";
+import { createDisplayLabel } from "@/lib/winning-pattern-presentation";
 
 type Signal = { dimension: PatternDimension; term: string };
 type Candidate = { signals: Signal[]; ids: Set<string> };
@@ -107,7 +108,7 @@ function toPattern(candidate: Candidate, videosById: Map<string, CompetitorVideo
   const selectedDuration = candidate.signals.find((signal) => signal.dimension === "DURACIÓN")?.term;
   const dimensions = Object.fromEntries(DIMENSIONS.map((dimension) => [CATEGORY_LABEL[dimension], values[CATEGORY_LABEL[dimension]] ?? []])) as Pick<WinningPattern, "topics" | "intents" | "pains" | "benefits" | "contexts" | "entities">;
   return {
-    id: keyFor(candidate.signals), label: candidateLabel(candidate.signals), status,
+    id: keyFor(candidate.signals), label: candidateLabel(candidate.signals), displayLabel: createDisplayLabel(candidate.signals), status,
     ...dimensions,
     titleStructures: values.titleStructures ?? [], recurringPhrases: candidate.signals.filter((signal) => signal.dimension !== "ESTRUCTURA" && signal.dimension !== "DURACIÓN" && signal.term.trim().split(/\s+/u).length > 1).map((signal) => signal.term),
     durationRange: { label: selectedDuration ?? (bands.length === 1 ? bands[0] : bands.length ? `${bands[0]}–${bands[bands.length - 1]}` : "Sin dato"), minSeconds: durations.length ? Math.min(...durations) : null, maxSeconds: durations.length ? Math.max(...durations) : null },

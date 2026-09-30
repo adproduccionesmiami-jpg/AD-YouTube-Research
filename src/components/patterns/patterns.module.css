@@ -408,6 +408,14 @@
   font-weight:720;
   white-space:nowrap
 }
+.statusEvidence {
+  display:block;
+  margin-top:4px;
+  color:#8b929c;
+  font-size:8px;
+  line-height:1.4;
+  white-space:normal
+}
 .consolidated {
   border-color:#d6eadf;
   background:#f0faf4;
@@ -424,10 +432,23 @@
   color:#9b6423
 }
 .emergingNote {
+  align-items:flex-start;
   margin:0 0 11px;
   border-color:#f0e4cd;
   background:#fffaf1;
   color:#7b6134
+}
+.emergingNote span,.emergingNote strong,.emergingNote small {
+  display:block
+}
+.emergingNote strong {
+  font-size:10px
+}
+.emergingNote small {
+  margin-top:3px;
+  color:#8a7652;
+  font-size:9px;
+  line-height:1.45
 }
 .empty {
   padding:25px 14px;
@@ -447,6 +468,13 @@
 .sectionHeading .channelLink {
   flex:none
 }
+.completeLabel {
+  max-width:720px;
+  margin:6px 0 0;
+  color:#979da6;
+  font-size:9px;
+  line-height:1.45
+}
 .metrics {
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -459,6 +487,9 @@
   border:1px solid #e8ebef;
   border-radius:9px;
   background:#fcfcfd
+}
+.metric[title] {
+  cursor:help
 }
 .metric span,.metric strong {
   display:block;
@@ -476,6 +507,35 @@
   font-size:13px;
   font-weight:720;
   font-variant-numeric:tabular-nums
+}
+.whyCard {
+  margin-bottom:12px;
+  padding:13px;
+  border:1px solid #e8ebef;
+  border-radius:10px;
+  background:#fcfcfd
+}
+.whyCard h3 {
+  margin:0 0 6px;
+  color:#3b4149;
+  font-size:11px;
+  font-weight:700
+}
+.whyCard p {
+  margin:0 0 7px;
+  color:#838b95;
+  font-size:9px;
+  line-height:1.5
+}
+.whyCard ul {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px 16px;
+  margin:0;
+  padding-left:16px;
+  color:#606973;
+  font-size:9px;
+  line-height:1.45
 }
 .detailGrid {
   display:grid;
@@ -620,6 +680,9 @@
   .evidence>strong {
     max-width:100%;
     text-align:left
+  }
+  .whyCard ul {
+    grid-template-columns:1fr
   }
 }
 @media(max-width:700px) {

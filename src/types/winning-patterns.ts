@@ -10,6 +10,7 @@ export type PatternEvidence = Pick<CompetitorVideo, "id" | "title" | "videoUrl" 
 export type WinningPattern = {
   id: string;
   label: string;
+  displayLabel: string;
   status: PatternStatus;
   topics: string[];
   intents: string[];
