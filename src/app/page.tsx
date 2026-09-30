@@ -25,6 +25,7 @@ import { classifyDuration, formatDate, formatDuration, formatNumber, formatRatio
 import { getFormFilterErrors, parseOptionalNumber } from "@/lib/opportunity-filters";
 import type { ResearchFailure, ResearchFormValues, ResearchRequest, ResearchSuccess, ResearchVideo } from "@/types/research";
 import CompetitorNavigationLink from "@/components/competitor/CompetitorNavigationLink";
+import WinningPatternsNavigationLink from "@/components/patterns/WinningPatternsNavigationLink";
 
 const DEFAULT_FORM: ResearchFormValues = {
   topic: "",
@@ -299,6 +300,7 @@ export default function Home() {
         </a>
         <div className="topbar-right">
           <CompetitorNavigationLink />
+          <WinningPatternsNavigationLink />
           <span className="workspace-tag"><span className="workspace-dot" /> ESPACIO PRIVADO</span>
           <span className="topbar-divider" />
           <span className="api-mark"><Play size={14} fill="currentColor" /> API v3</span>
