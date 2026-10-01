@@ -1,6 +1,8 @@
-# AD YouTube Research
+# AD Investigación YouTube (ADYR)
 
 Herramienta interna para investigar videos y canales públicos de YouTube. La interfaz está en español y consulta datos reales mediante YouTube Data API v3.
+
+> Regla de nomenclatura: nombres visibles de módulos, reportes, commits y documentación nueva en español y reconocibles para el usuario. Identificadores técnicos internos pueden mantenerse si cambiarlos rompe compatibilidad.
 
 ## Requisitos
 
@@ -51,3 +53,19 @@ Si falta la variable, el endpoint devuelve un error controlado en español. Tamb
 - Duración por categorías: corto (<4 min), medio (4–20 min, inclusive), largo (>20 min) o rango personalizado en minutos. Las categorías describen duración y no identifican Shorts.
 - Orden por relevancia, vistas, fecha de publicación o relación Vistas/Subs; los valores ausentes quedan al final en los órdenes numéricos y por fecha.
 - Con filtros posteriores a la búsqueda, se recupera un máximo de 50 candidatos en una sola búsqueda, se enriquecen y filtran en el servidor y se devuelven hasta el máximo elegido. El contador refleja solo los videos válidos devueltos.
+
+## Próxima evolución — v0.05 · Inteligencia de Oportunidad
+
+La especificación metodológica de la siguiente capa vive en:
+
+`docs/v0.05-inteligencia-de-oportunidad.md`
+
+v0.05 debe añadir de forma aislada y reversible:
+- Valor Económico de la Audiencia;
+- Complejidad de Producción;
+- Intensidad de Necesidad;
+- Intención del Espectador;
+- Potencial de Monetización Extendida;
+- clasificación Viral Primero / Monetización Primero / Híbrida.
+
+Estas dimensiones no reemplazan outliers, Vistas/Suscriptores, Vistas/Mediana, Vistas/Día, winners, recencia, clusters ni Patrones Ganadores.
