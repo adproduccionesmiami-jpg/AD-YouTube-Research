@@ -55,6 +55,11 @@
 .formHint strong { color: #646c75; }
 .errorBox { display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 12px 14px; border: 1px solid #f0d1d1; border-radius: 10px; background: #fff8f8; color: #8d272b; font-size: 11px; line-height: 1.55; }
 .errorBox svg { flex: none; margin-top: 1px; }
+.entryPreview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.entryPreviewCard { min-width: 0; display: flex; align-items: flex-start; gap: 11px; padding: 15px; border: 1px solid #e6e9ed; border-radius: 12px; background: rgba(255,255,255,.78); }
+.entryPreviewIcon { width: 33px; height: 33px; display: grid; place-items: center; flex: none; border: 1px solid #f0d6d7; border-radius: 10px; background: #fff7f7; color: #c82a30; }
+.entryPreviewCard h3 { margin: 1px 0 0; color: #3a4048; font-size: 11px; font-weight: 720; }
+.entryPreviewCard p { margin: 5px 0 0; color: #8b929c; font-size: 9.5px; line-height: 1.5; }
 .loadingBox { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 16px; border: 1px solid #e7eaee; border-radius: 12px; background: white; color: #66707b; font-size: 11px; }
 .spin { animation: spin 1.15s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -157,6 +162,7 @@
 }
 
 @media (max-width: 760px) {
+  .entryPreview { grid-template-columns: 1fr; }
   .header { height: 60px; padding: 0 18px; }
   .brandMark { width: 31px; height: 31px; }
   .brandName { font-size: 12px; }
