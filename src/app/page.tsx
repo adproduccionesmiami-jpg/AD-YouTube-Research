@@ -197,9 +197,14 @@ function EmptyState() {
         <span className="empty-spark spark-one"><Sparkles size={14} /></span>
         <span className="empty-spark spark-two"><Play size={12} fill="currentColor" /></span>
       </div>
-      <p className="eyebrow empty-eyebrow">TU ESPACIO DE INVESTIGACIÓN</p>
-      <h2>Una búsqueda clara.<br /><span>Mejores señales.</span></h2>
-      <p className="empty-copy">Define un tema y consulta videos y canales públicos con datos reales de YouTube.</p>
+      <p className="eyebrow empty-eyebrow">INTELIGENCIA DE OPORTUNIDAD</p>
+      <h2>Empieza por <span>una oportunidad.</span></h2>
+      <p className="empty-copy">Introduce un mercado, nicho o tema y analiza señales reales antes de decidir qué construir.</p>
+      <div className="empty-signals" aria-label="Señales que puedes analizar">
+        <span>Demanda</span>
+        <span>Competencia</span>
+        <span>Patrones</span>
+      </div>
     </section>
   );
 }
@@ -305,9 +310,9 @@ export default function Home() {
       <div className="page-content" id="inicio">
         <section className="intro-row">
           <div className="intro-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> INTELIGENCIA DE CONTENIDO</p>
+            <p className="eyebrow"><span className="eyebrow-line" /> INTELIGENCIA DE OPORTUNIDAD</p>
             <h1>Investiga con <span>datos reales.</span></h1>
-            <p className="intro-description">Encuentra señales de demanda, entiende el contexto de cada canal y valida tus ideas antes de producir.</p>
+            <p className="intro-description">Descubre señales de demanda, competencia y rendimiento antes de invertir en producción.</p>
           </div>
           <div className="live-indicator"><span className="live-icon"><Play size={15} fill="currentColor" /></span><span><b>Datos públicos</b><small>Conexión en tiempo real</small></span><span className="live-dot" /></div>
         </section>
@@ -316,9 +321,9 @@ export default function Home() {
           <div className="panel-heading">
             <div className="panel-heading-left">
               <span className="panel-icon"><Search size={17} /></span>
-              <div><h2 id="search-heading">Configura tu búsqueda</h2><p>Delimita el campo de análisis para obtener resultados útiles.</p></div>
+              <div><h2 id="search-heading">Explora una oportunidad</h2><p>Define el mercado, nicho o tema que quieres investigar.</p></div>
             </div>
-            <div className="panel-context"><span className="context-dot" /> BÚSQUEDA DE VIDEOS</div>
+            <div className="panel-context"><span className="context-dot" /> EXPLORACIÓN DE MERCADO</div>
           </div>
 
           <form onSubmit={handleSearch}>
@@ -403,7 +408,7 @@ export default function Home() {
                 <button className="clear-button" type="button" onClick={clearForm} disabled={isLoading}><RotateCcw size={15} /> Limpiar</button>
                 <button className="search-button" type="submit" disabled={isLoading || !form.topic.trim()}>
                   {isLoading ? <LoaderCircle size={17} className="spin" /> : <Search size={17} />}
-                  {isLoading ? "Buscando en YouTube…" : "Buscar en YouTube"}
+                  {isLoading ? "Analizando oportunidad…" : "Analizar oportunidad"}
                   {!isLoading && <ArrowUpRight size={15} className="button-arrow" />}
                 </button>
               </div>
