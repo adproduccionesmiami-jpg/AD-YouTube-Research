@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { AlertTriangle, ArrowUpRight, LoaderCircle, Search, Sparkles, Trophy } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, Clock3, Layers3, Lightbulb, LoaderCircle, Search, Sparkles, Target, Trophy } from "lucide-react";
 import type { CompetitorReport } from "@/types/competitor";
 import type { WinningPatternsAnalysis, WinningPattern } from "@/types/winning-patterns";
 import { analyzeWinningPatterns } from "@/lib/winning-patterns";
@@ -68,7 +68,16 @@ export default function WinningPatternsAnalyzer() {
   const allPatterns = analysis ? [...analysis.patterns, ...analysis.emergingSignals] : [];
   const selected = allPatterns.find((item) => item.id === selectedId) ?? null;
   return <>
-    <section className={styles.formCard}><div className={styles.formHeading}><span><Search size={16} /></span><div><h2>Canal de referencia</h2><p>Analiza las combinaciones que se repiten detrás de los videos con mejor rendimiento.</p></div></div><form onSubmit={submit}><div className={styles.formRow}><label htmlFor="pattern-channel">URL YouTube, @handle o channel ID<input id="pattern-channel" required autoComplete="off" maxLength={1000} value={channel} onChange={(event) => setChannel(event.target.value)} placeholder="youtube.com/@canal · @canal · UC…" /></label><button type="submit" disabled={loading || !channel.trim()}>{loading ? <LoaderCircle className={styles.spin} size={16} /> : <Sparkles size={16} />}{loading ? "Analizando…" : "Descubrir patrones"}</button></div><p className={styles.formHint}>Usa un canal público para descubrir patrones, señales emergentes y evidencia de rendimiento.</p></form>{error && <div className={styles.error} role="alert"><AlertTriangle size={15} />{error.message}</div>}</section>
+    <section className={styles.formCard}><div className={styles.formHeading}><span><Search size={16} /></span><div><h2>Canal a analizar</h2><p>Analiza qué temas, estructuras y señales aparecen repetidamente entre los videos con mejor rendimiento del canal.</p></div></div><form onSubmit={submit}><div className={styles.formRow}><label htmlFor="pattern-channel">Canal de YouTube<input id="pattern-channel" required autoComplete="off" maxLength={1000} value={channel} onChange={(event) => setChannel(event.target.value)} placeholder="Pega una URL, @handle o ID del canal" /></label><button type="submit" disabled={loading || !channel.trim()}>{loading ? <LoaderCircle className={styles.spin} size={16} /> : <Sparkles size={16} />}{loading ? "Analizando…" : "Descubrir patrones"}</button></div><p className={styles.formHint}>Descubre señales y combinaciones recurrentes asociadas a los videos que destacan dentro de la muestra.</p></form>{error && <div className={styles.error} role="alert"><AlertTriangle size={15} />{error.message}</div>}</section>
+    {!analysis && !loading && (
+      <section className={styles.entryPreview} aria-label="Qué analiza Patrones ganadores">
+        <article className={styles.entryPreviewCard}><span className={styles.entryPreviewIcon}><Lightbulb size={16} /></span><div><h3>Temas</h3><p>Qué asuntos aparecen repetidamente.</p></div></article>
+        <article className={styles.entryPreviewCard}><span className={styles.entryPreviewIcon}><Target size={16} /></span><div><h3>Intenciones</h3><p>Qué necesidad o propósito refleja el contenido.</p></div></article>
+        <article className={styles.entryPreviewCard}><span className={styles.entryPreviewIcon}><Layers3 size={16} /></span><div><h3>Estructuras</h3><p>Qué formas de presentar la idea vuelven a aparecer.</p></div></article>
+        <article className={styles.entryPreviewCard}><span className={styles.entryPreviewIcon}><Clock3 size={16} /></span><div><h3>Duración</h3><p>Qué rangos acompañan los patrones observados.</p></div></article>
+        <article className={styles.entryPreviewCard}><span className={styles.entryPreviewIcon}><Sparkles size={16} /></span><div><h3>Señales repetidas</h3><p>Qué combinaciones aparecen entre los videos con mejor rendimiento.</p></div></article>
+      </section>
+    )}
     {loading && <div className={styles.loading} role="status"><LoaderCircle className={styles.spin} size={18} />Analizando el canal y buscando combinaciones repetidas…</div>}
     {analysis && <div className={styles.report}><section className={styles.identity}><div><p className={styles.eyebrow}>CANAL ANALIZADO</p><h2>{analysis.channelName}</h2><p>{analysis.sampleSize} videos analizados · patrones detectados en la muestra reciente</p></div><a href={analysis.channelUrl} target="_blank" rel="noreferrer">Ver canal <ArrowUpRight size={13} /></a></section>
       <div className={styles.summary}><div><span>Patrones principales</span><strong>{analysis.patterns.length}</strong></div><div><span>Señales emergentes</span><strong>{analysis.emergingSignals.length}</strong></div><div><span>Muestra del canal</span><strong>{analysis.sampleSize}</strong></div></div>
