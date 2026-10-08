@@ -99,7 +99,7 @@ export default function CompetitorReportView({ report, sortBy, onSortChange }: {
         <ImageWithFallback src={report.channel.avatar} name={report.channel.name} size="avatar" />
         <div>
           <h2 className={styles.channelName}>{report.channel.name}</h2>
-          <p className={styles.channelHandle}>{report.channel.handle ?? "Handle no disponible"} · ID: {report.channel.id}</p>
+          <p className={styles.channelHandle}>{report.channel.handle ?? "Handle no disponible"}</p>
           {report.channel.description && <p className={styles.channelDescription}>{report.channel.description}</p>}
           <div className={styles.identityMeta}>
             <span><CalendarDays size={12} /> Creado: {dateLabel(report.channel.createdAt)} · {report.channelMetrics.ageLabel ?? "antigüedad no disponible"}</span>
@@ -122,7 +122,7 @@ export default function CompetitorReportView({ report, sortBy, onSortChange }: {
       {report.warnings.length > 0 && <div className={styles.warningList}>{report.warnings.map((warning) => <div className={styles.warning} key={warning}><AlertCircle size={13} />{warning}</div>)}</div>}
 
       <section className={styles.section}>
-        <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Videos de la muestra</h2><p className={styles.sectionSubtitle}>Ordena localmente. Los cambios de orden no consultan YouTube.</p></div><span className={styles.sectionBadge}>{report.sample.analyzed} analizados</span></div>
+        <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Videos de la muestra</h2><p className={styles.sectionSubtitle}>Ordena la muestra por la señal que quieras revisar.</p></div><span className={styles.sectionBadge}>{report.sample.analyzed} analizados</span></div>
         <div className={styles.toolbar}>
           <span className={styles.toolbarNote}>Views/Subs y Views/Median usan suscriptores actuales y la mediana de esta muestra.</span>
           <label className={styles.sortField}>Ordenar por
@@ -176,7 +176,7 @@ export default function CompetitorReportView({ report, sortBy, onSortChange }: {
 
       <div className={styles.twoColumns}>
         <section className={styles.section}>
-          <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Tags reales de YouTube</h2><p className={styles.sectionSubtitle}>Tags oficiales recibidos por video.list, sin mezclarlos con el texto del título o la descripción.</p></div><span className={styles.sectionBadge}>Fuente oficial</span></div>
+          <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>Tags reales de YouTube</h2><p className={styles.sectionSubtitle}>Tags publicados en YouTube, separados del texto del título y la descripción.</p></div><span className={styles.sectionBadge}>Fuente oficial</span></div>
           <KeywordTable items={report.youtubeTags} />
         </section>
         <section className={styles.section}>
@@ -239,7 +239,7 @@ export default function CompetitorReportView({ report, sortBy, onSortChange }: {
         <div className={styles.sectionHeading}><div><h2 className={styles.sectionTitle}>AD Competitive Fingerprint</h2><p className={styles.sectionSubtitle}>Radiografía descriptiva generada con las métricas de esta muestra; no contiene recomendaciones automáticas.</p></div><Sparkles size={16} color="#b32b30" /></div>
         <div className={styles.fingerprint}>{groups.map(([title, items]) => <section className={styles.fingerprintGroup} key={title}><h3>{title}</h3>{items.length ? <ul>{items.map((item, index) => <li key={`${title}-${index}`}>{item}</li>)}</ul> : <span className={styles.empty}>No disponible con estos datos.</span>}</section>)}</div>
       </section>
-      <p className={styles.sectionSubtitle}><Film size={12} style={{ display: "inline", verticalAlign: "-2px", marginRight: 5 }} /> Tags reales de YouTube se muestran de forma independiente; las keywords y clasificaciones son extracción heurística local, no etiquetas oficiales ni análisis de IA.</p>
+      <p className={styles.sectionSubtitle}><Film size={12} style={{ display: "inline", verticalAlign: "-2px", marginRight: 5 }} /> Los tags de YouTube se muestran de forma independiente; las keywords y clasificaciones de ADYTR son señales derivadas de la muestra y no etiquetas oficiales.</p>
     </div>
   );
 }
