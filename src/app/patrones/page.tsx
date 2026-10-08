@@ -15,7 +15,7 @@ export default function WinningPatternsPage() {
       <Link className={styles.homeLink} href="/"><ArrowLeft size={14} /><span>Research de videos</span></Link>
     </header>
     <main className={styles.content}>
-      <section className={styles.intro}><p className={styles.eyebrow}><span className={styles.eyebrowLine} /> INTELIGENCIA DE PATRONES</p><h1>Patrones <span>ganadores.</span></h1><p>Descubre qué combinaciones se repiten detrás de los videos que superan el rendimiento normal del nicho.</p></section>
+      <section className={styles.intro}><p className={styles.eyebrow}><span className={styles.eyebrowLine} /> INTELIGENCIA DE PATRONES</p><h1>Patrones <span>ganadores.</span></h1><p>Descubre qué combinaciones se repiten detrás de los videos que superan el rendimiento normal del canal.</p></section>
       <WinningPatternsAnalyzer />
     </main>
   </div>;
