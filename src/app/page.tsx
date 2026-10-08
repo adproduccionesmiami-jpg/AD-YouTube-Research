@@ -18,7 +18,6 @@ import {
   Play,
   RotateCcw,
   Search,
-  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import { classifyDuration, formatDate, formatDuration, formatNumber, formatRatio } from "@/lib/youtube-format";
@@ -201,7 +200,6 @@ function EmptyState() {
       <p className="eyebrow empty-eyebrow">TU ESPACIO DE INVESTIGACIÓN</p>
       <h2>Una búsqueda clara.<br /><span>Mejores señales.</span></h2>
       <p className="empty-copy">Define un tema y consulta videos y canales públicos con datos reales de YouTube.</p>
-      <div className="empty-footnote"><ShieldCheck size={15} /> La clave de API permanece protegida en el servidor</div>
     </section>
   );
 }
@@ -301,9 +299,6 @@ export default function Home() {
         <div className="topbar-right">
           <CompetitorNavigationLink />
           <WinningPatternsNavigationLink />
-          <span className="workspace-tag"><span className="workspace-dot" /> ESPACIO PRIVADO</span>
-          <span className="topbar-divider" />
-          <span className="api-mark"><Play size={14} fill="currentColor" /> API v3</span>
         </div>
       </header>
 
@@ -414,7 +409,6 @@ export default function Home() {
               </div>
             </div>
           </form>
-          <div className="panel-footer"><span><ShieldCheck size={14} /> La consulta se procesa en el servidor; la clave no se expone</span><span className="footer-separator" /><span>Una página por búsqueda · hasta 50 videos</span></div>
         </section>
 
         {viewState === "idle" && <EmptyState />}
@@ -461,7 +455,7 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="page-footer"><span>AD YOUTUBE RESEARCH <i>·</i> V0.02</span><span>Investigación interna de oportunidades en YouTube <ArrowUpRight size={12} /></span></footer>
+        <footer className="page-footer"><span>AD YOUTUBE RESEARCH</span><span>Inteligencia de oportunidades en YouTube <ArrowUpRight size={12} /></span></footer>
       </div>
     </main>
   );
