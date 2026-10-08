@@ -22,7 +22,7 @@ export default function CompetitorPage() {
         <section className={styles.intro}>
           <p className={styles.eyebrow}><span className={styles.eyebrowLine} /> INTELIGENCIA COMPETITIVA</p>
           <h1>Analizar <span>competencia.</span></h1>
-          <p>Obtén una radiografía verificable de lo que publica un canal, qué rinde por encima de su propia muestra y qué patrones se repiten.</p>
+          <p>Descubre qué contenidos superan el rendimiento habitual del canal y qué señales se repiten entre sus mejores videos.</p>
         </section>
         <CompetitorAnalyzer />
       </main>
