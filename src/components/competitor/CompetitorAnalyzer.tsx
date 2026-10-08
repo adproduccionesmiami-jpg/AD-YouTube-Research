@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { AlertTriangle, LoaderCircle, Search } from "lucide-react";
+import { AlertTriangle, BarChart3, LoaderCircle, Search, Sparkles, Trophy } from "lucide-react";
 import type { CompetitorReport } from "@/types/competitor";
 import CompetitorReportView, { type VideoSortKey } from "./CompetitorReportView";
 import styles from "./competitor.module.css";
@@ -46,13 +46,13 @@ export default function CompetitorAnalyzer() {
       <section className={styles.formCard} aria-labelledby="competitor-form-heading">
         <div className={styles.formHeading}>
           <span className={styles.formIcon}><Search size={16} /></span>
-          <div><h2 id="competitor-form-heading">Canal de referencia</h2><p>Analiza un canal público y descubre qué contenidos destacan dentro de su rendimiento reciente.</p></div>
+          <div><h2 id="competitor-form-heading">Canal a analizar</h2><p>Pega un canal público para analizar su rendimiento reciente, videos ganadores y patrones detectados.</p></div>
         </div>
         <form onSubmit={handleSubmit}>
           <div className={styles.formRow}>
             <label className={styles.field} htmlFor="competitor-channel">
-              URL del canal, @handle o channel ID
-              <span className={styles.inputWrap}><Search size={15} /><input id="competitor-channel" autoComplete="off" maxLength={1000} required value={channel} onChange={(event) => setChannel(event.target.value)} placeholder="youtube.com/@canal · @canal · UC…" /></span>
+              Canal de YouTube
+              <span className={styles.inputWrap}><Search size={15} /><input id="competitor-channel" autoComplete="off" maxLength={1000} required value={channel} onChange={(event) => setChannel(event.target.value)} placeholder="Pega una URL, @handle o ID del canal" /></span>
             </label>
             <button className={styles.submitButton} type="submit" disabled={isLoading || !channel.trim()}>
               {isLoading ? <LoaderCircle className={styles.spin} size={16} /> : <Search size={16} />}
@@ -63,6 +63,22 @@ export default function CompetitorAnalyzer() {
         </form>
         {error && <div className={styles.errorBox} role="alert"><AlertTriangle size={15} /><span><strong>{error.code ?? "ERROR"}:</strong> {error.message ?? "No se pudo completar el análisis."}</span></div>}
       </section>
+      {!report && !isLoading && (
+        <section className={styles.entryPreview} aria-label="Qué obtendrás del análisis">
+          <article className={styles.entryPreviewCard}>
+            <span className={styles.entryPreviewIcon}><BarChart3 size={17} /></span>
+            <div><h3>Rendimiento</h3><p>Compara el comportamiento reciente del canal.</p></div>
+          </article>
+          <article className={styles.entryPreviewCard}>
+            <span className={styles.entryPreviewIcon}><Trophy size={17} /></span>
+            <div><h3>Videos ganadores</h3><p>Identifica contenidos que superan su línea base.</p></div>
+          </article>
+          <article className={styles.entryPreviewCard}>
+            <span className={styles.entryPreviewIcon}><Sparkles size={17} /></span>
+            <div><h3>Patrones detectados</h3><p>Descubre señales que aparecen repetidamente entre los mejores videos.</p></div>
+          </article>
+        </section>
+      )}
       {isLoading && <div className={styles.loadingBox} role="status" aria-live="polite"><LoaderCircle className={styles.spin} size={19} />Consultando la identidad del canal y su muestra reciente de videos…</div>}
       {report && <CompetitorReportView report={report} sortBy={sortBy} onSortChange={setSortBy} />}
     </>
