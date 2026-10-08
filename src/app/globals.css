@@ -131,6 +131,8 @@ h1 span { color: var(--red); }
 .empty-state h2 { margin: 0; color: #343942; font-size: 21px; line-height: 1.25; letter-spacing: -.75px; font-weight: 670; }
 .empty-state h2 span { color: #a9aeb6; font-weight: 500; }
 .empty-copy { max-width: 350px; margin: 10px 0 15px; color: #9298a1; font-size: 11px; line-height: 1.65; }
+.empty-signals { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin-top: 1px; }
+.empty-signals span { display: inline-flex; align-items: center; min-height: 25px; padding: 0 10px; color: #6f7781; border: 1px solid #e7e9ec; border-radius: 999px; background: rgba(255,255,255,.82); font-size: 8.5px; font-weight: 650; letter-spacing: .02em; }
 .empty-footnote { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; color: #838b94; border: 1px solid #edf0ed; border-radius: 20px; background: rgba(255,255,255,.72); font-size: 9px; }
 .empty-footnote svg { color: #63977f; }
 
