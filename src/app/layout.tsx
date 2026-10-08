@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AD YouTube Research",
-  description: "Investigación interna de oportunidades en YouTube.",
+  description: "Investiga oportunidades en YouTube con datos reales.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
