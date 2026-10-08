@@ -35,7 +35,7 @@ export default function CompetitorAnalyzer() {
       setSortBy("views");
     } catch {
       setReport(null);
-      setError({ code: "NETWORK_ERROR", message: "No se pudo conectar con el servidor. Comprueba la conexión e inténtalo de nuevo." });
+      setError({ code: "NETWORK_ERROR", message: "No se pudo completar el análisis. Comprueba la conexión e inténtalo de nuevo." });
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +46,7 @@ export default function CompetitorAnalyzer() {
       <section className={styles.formCard} aria-labelledby="competitor-form-heading">
         <div className={styles.formHeading}>
           <span className={styles.formIcon}><Search size={16} /></span>
-          <div><h2 id="competitor-form-heading">Canal de referencia</h2><p>Analiza un canal público. La estructura permite comparar varios canales en una fase posterior.</p></div>
+          <div><h2 id="competitor-form-heading">Canal de referencia</h2><p>Analiza un canal público y descubre qué contenidos destacan dentro de su rendimiento reciente.</p></div>
         </div>
         <form onSubmit={handleSubmit}>
           <div className={styles.formRow}>
@@ -59,7 +59,7 @@ export default function CompetitorAnalyzer() {
               {isLoading ? "Analizando canal…" : "Analizar competencia"}
             </button>
           </div>
-          <p className={styles.formHint}>Se consultan hasta <strong>50 videos públicos recientes</strong>. Los enlaces modernos, @handles y channel IDs usan consultas agrupadas de bajo coste. Las URL antiguas <strong>/c/</strong> pueden requerir una búsqueda adicional de 100 unidades.</p>
+          <p className={styles.formHint}>Analiza hasta <strong>50 videos públicos recientes</strong> para entender el rendimiento y las señales que se repiten.</p>
         </form>
         {error && <div className={styles.errorBox} role="alert"><AlertTriangle size={15} /><span><strong>{error.code ?? "ERROR"}:</strong> {error.message ?? "No se pudo completar el análisis."}</span></div>}
       </section>
