@@ -104,18 +104,20 @@ export default function CompetitorReportView({ report, sortBy, onSortChange }: {
           <div className={styles.identityMeta}>
             <span><CalendarDays size={12} /> Creado: {dateLabel(report.channel.createdAt)} · {report.channelMetrics.ageLabel ?? "antigüedad no disponible"}</span>
             <span><Eye size={12} /> País: {report.channel.country ?? "No disponible"}</span>
+            <span>{compact(report.channel.totalViews)} vistas totales</span>
+            <span>{compact(report.channel.totalVideoCount)} videos en el canal</span>
           </div>
         </div>
         <a className={styles.channelExternal} href={report.channel.url} target="_blank" rel="noreferrer noopener"><ExternalLink size={13} /> Abrir canal</a>
       </section>
 
-      <section className={styles.metricGrid} aria-label="Métricas del canal y la muestra">
-        <MetricCard label="Suscriptores" value={compact(report.channel.subscribers)} note="Actuales del canal" />
-        <MetricCard label="Vistas totales" value={compact(report.channel.totalViews)} note="Histórico del canal" />
-        <MetricCard label="Videos del canal" value={compact(report.channel.totalVideoCount)} note="Dato de YouTube" />
-        <MetricCard label="Promedio de vistas" value={compact(report.sample.averageViews)} note={`${report.sample.videosWithViews} videos con dato de vistas`} />
-        <MetricCard label="Mediana de vistas" value={compact(report.sample.medianViews)} note={`${report.sample.videosWithViews} videos con dato de vistas`} />
-        <MetricCard label="Videos por semana" value={report.cadence.videosPerWeek === null ? "No disponible" : `≈${report.cadence.videosPerWeek}`} note="Estimación sobre la muestra reciente" />
+      <section className={styles.metricGrid} aria-label="Resumen del canal y la muestra">
+        <div className={styles.metricPrimary}><MetricCard label="Videos analizados" value={formatNumber(report.sample.analyzed)} note="Muestra reciente" /></div>
+        <div className={styles.metricPrimary}><MetricCard label="Mediana de vistas" value={compact(report.sample.medianViews)} note={`${report.sample.videosWithViews} videos con dato de vistas`} /></div>
+        <div className={styles.metricPrimary}><MetricCard label="Promedio de vistas" value={compact(report.sample.averageViews)} note={`${report.sample.videosWithViews} videos con dato de vistas`} /></div>
+        <div className={styles.metricPrimary}><MetricCard label="Videos ganadores" value={formatNumber(report.winners.length)} note="Detectados en la muestra" /></div>
+        <div className={styles.metricSecondary}><MetricCard label="Suscriptores" value={compact(report.channel.subscribers)} note="Actuales del canal" /></div>
+        <div className={styles.metricSecondary}><MetricCard label="Videos por semana" value={report.cadence.videosPerWeek === null ? "No disponible" : `≈${report.cadence.videosPerWeek}`} note="Estimación sobre la muestra reciente" /></div>
       </section>
 
       <div className={styles.sampleNote}><Info size={14} /><span>Las métricas de rendimiento se calculan sobre <strong>{report.sample.analyzed} videos públicos recientes</strong>, no sobre todo el historial. Los promedios usan solo registros con la métrica disponible ({report.sample.videosWithViews} con vistas). Publicados entre {dateLabel(report.sample.firstPublishedAt)} y {dateLabel(report.sample.lastPublishedAt)}. La muestra inicial está limitada a 50 videos.</span></div>
